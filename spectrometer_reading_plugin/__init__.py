@@ -1,0 +1,1 @@
+from spectrometer_reading_plugin.relay import click_spectrometer_reading
