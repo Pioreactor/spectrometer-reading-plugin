@@ -7,6 +7,41 @@ import click
 from pioreactor.background_jobs.base import BackgroundJobWithDodging
 from pioreactor.whoami import get_latest_experiment_name
 from pioreactor.whoami import get_unit_name
+from pioreactor.utils.timing import current_utc_timestamp
+
+from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParserToTable
+from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
+from pioreactor.background_jobs.leader.mqtt_to_db_streaming import msgspec_loads
+
+
+
+def parser(topic, payload) -> dict:
+    metadata = produce_metadata(topic)
+    rpms = msgspec_loads(payload)
+
+    return {
+        "experiment": metadata.experiment,
+        "pioreactor_unit": metadata.pioreactor_unit,
+        "timestamp": current_utc_timestamp(),
+        "reading": float(payload),
+        "band": metadata.rest_of_topic[-1],
+    }
+
+
+topic_to_parser_to_table_spectrum = TopicToParserToTable([
+    "pioreactor/+/+/spectrometer_reading/band_415",
+    "pioreactor/+/+/spectrometer_reading/band_445",
+    "pioreactor/+/+/spectrometer_reading/band_480",
+    "pioreactor/+/+/spectrometer_reading/band_515",
+    "pioreactor/+/+/spectrometer_reading/band_555",
+    "pioreactor/+/+/spectrometer_reading/band_590",
+    "pioreactor/+/+/spectrometer_reading/band_630",
+    "pioreactor/+/+/spectrometer_reading/band_680",
+    ],
+    parser,
+    "as7341_spectrum_readings"
+)
+
 
 class SpectrometerReading(BackgroundJobWithDodging):
 
@@ -70,15 +105,21 @@ class SpectrometerReading(BackgroundJobWithDodging):
         self.record_band_680()
     
     def normalize(self, band_recording):
-        return band_recording / self.sensor.channel_clear
+        return band_recording # / self.sensor.channel_clear
     
     def action_to_do_before_od_reading(self):
         pass
+
+    def turn_on_led(self):
+        self.sensor.led = True
+
+    def turn_off_led(self):
+        self.sensor.led = False
     
     def action_to_do_after_od_reading(self):
-        self.sensor.led = True
+        self.turn_on_led()
         self.record_all_bands()
-        self.sensor.led = False
+        self.turn_off_led()
         
 @click.command(name="spectrometer_reading")
 def click_spectrometer_reading():

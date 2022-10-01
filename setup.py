@@ -9,13 +9,12 @@ setup(
     description="Take spectrometer readings (between OD readings) from the Adafruit AS7341 attached to your Pioreactor",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author_email="kelly@pioreactor.com",
-    author="Kelly Tran",
-    url="https://github.com/kellytr/pioreactor-relay-plugin",
+    author_email="cam@pioreactor.com",
+    author="Kelly Tran, Cam Davidson-Pilon",
+    url="https://github.com/Pioreactor/spectrometer-reading-plugin",
     packages=find_packages(),
-    include_package_data=True,
-    install_requires=['adafruit_as7341']
+    install_requires=['adafruit-circuitpython-as7341'],
     entry_points={
-        "pioreactor.plugins": "pioreactor_relay_plugin = pioreactor_relay_plugin"
+        "pioreactor.plugins": "spectrometer_reading_plugin = spectrometer_reading_plugin"
     },
 )
