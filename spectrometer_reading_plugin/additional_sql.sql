@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS as7341_spectrum_readings (
     pioreactor_unit          TEXT NOT NULL,
     timestamp                TEXT NOT NULL,
     reading                  REAL,
-    band                     INT,
-)
+    band                     INT
+);

@@ -4,4 +4,4 @@ job_name: spectrometer_reading
 display: true
 source: spectrometer_reading_plugin
 description: Records normalized spectrometer readings from an attached Adafruit AS7341.
-published_settings:
+published_settings: []

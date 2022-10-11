@@ -6,8 +6,10 @@ import board
 import click
 from pioreactor.background_jobs.base import BackgroundJobWithDodging
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
+from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_source_to_sink
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParserToTable
 from pioreactor.config import config
+from pioreactor.exc import HardwareNotFoundError
 from pioreactor.utils.timing import current_utc_timestamp
 from pioreactor.whoami import get_latest_experiment_name
 from pioreactor.whoami import get_unit_name
@@ -21,23 +23,25 @@ def parser(topic, payload) -> dict:
         "pioreactor_unit": metadata.pioreactor_unit,
         "timestamp": current_utc_timestamp(),
         "reading": float(payload),
-        "band": metadata.rest_of_topic[-1],
+        "band": int(metadata.rest_of_topic[-1].removeprefix("band_")),
     }
 
 
-topic_to_parser_to_table_spectrum = TopicToParserToTable(
-    [
-        "pioreactor/+/+/spectrometer_reading/band_415",
-        "pioreactor/+/+/spectrometer_reading/band_445",
-        "pioreactor/+/+/spectrometer_reading/band_480",
-        "pioreactor/+/+/spectrometer_reading/band_515",
-        "pioreactor/+/+/spectrometer_reading/band_555",
-        "pioreactor/+/+/spectrometer_reading/band_590",
-        "pioreactor/+/+/spectrometer_reading/band_630",
-        "pioreactor/+/+/spectrometer_reading/band_680",
-    ],
-    parser,
-    "as7341_spectrum_readings",
+register_source_to_sink(
+    TopicToParserToTable(
+        [
+            "pioreactor/+/+/spectrometer_reading/band_415",
+            "pioreactor/+/+/spectrometer_reading/band_445",
+            "pioreactor/+/+/spectrometer_reading/band_480",
+            "pioreactor/+/+/spectrometer_reading/band_515",
+            "pioreactor/+/+/spectrometer_reading/band_555",
+            "pioreactor/+/+/spectrometer_reading/band_590",
+            "pioreactor/+/+/spectrometer_reading/band_630",
+            "pioreactor/+/+/spectrometer_reading/band_680",
+        ],
+        parser,
+        "as7341_spectrum_readings",
+    )
 )
 
 
@@ -46,14 +50,14 @@ class SpectrometerReading(BackgroundJobWithDodging):
     job_name = "spectrometer_reading"
 
     published_settings = {
-        "band_415": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_445": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_480": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_515": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_555": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_590": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_630": {"datatype": "float", "unit": "AU", "settable": False},
-        "band_680": {"datatype": "float", "unit": "AU", "settable": False},
+        "band_415": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_445": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_480": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_515": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_555": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_590": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_630": {"datatype": "int", "unit": "AU", "settable": False},
+        "band_680": {"datatype": "int", "unit": "AU", "settable": False},
     }
 
     def __init__(self, unit, experiment):
@@ -62,9 +66,9 @@ class SpectrometerReading(BackgroundJobWithDodging):
         try:
             i2c = board.I2C()
             self.sensor = adafruit_as7341.AS7341(i2c)
-        except Exception as e:
+        except Exception:
             self.logger.error("Is the AS7341 board attached to the Pioreactor HAT?")
-            raise e
+            raise HardwareNotFoundError("Is the AS7341 board attached to the Pioreactor HAT?")
 
         self.sensor.led_current = config.getfloat("spectrometer_reading", "led_current_mA")
 
@@ -102,8 +106,8 @@ class SpectrometerReading(BackgroundJobWithDodging):
         self.record_band_630()
         self.record_band_680()
 
-    def normalize(self, band_recording):
-        return band_recording  # / self.sensor.channel_clear
+    def normalize(self, band_recording: int):
+        return band_recording
 
     def action_to_do_before_od_reading(self):
         pass
@@ -130,7 +134,3 @@ def click_spectrometer_reading():
         experiment=get_latest_experiment_name(),
     )
     job.block_until_disconnected()
-
-
-if __name__ == "__main__":
-    click_spectrometer_reading()
