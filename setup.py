@@ -16,6 +16,7 @@ setup(
     author="Kelly Tran, Cam Davidson-Pilon",
     url="https://github.com/Pioreactor/spectrometer-reading-plugin",
     packages=find_packages(),
+    include_package_data=True,
     install_requires=["adafruit-circuitpython-as7341"],
     entry_points={"pioreactor.plugins": "spectrometer_reading_plugin = spectrometer_reading_plugin"},
 )
