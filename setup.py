@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name="spectrometer_reading_plugin",
-    version="0.0.3",
+    version="0.1.0",
     license="MIT",
     description="Take spectrometer readings (between OD readings) from the Adafruit AS7341 attached to your Pioreactor",
     long_description=open("README.md").read(),
