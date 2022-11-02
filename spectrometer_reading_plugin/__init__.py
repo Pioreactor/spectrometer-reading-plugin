@@ -10,7 +10,7 @@ from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_sour
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParserToTable
 from pioreactor.config import config
 from pioreactor.exc import HardwareNotFoundError
-from pioreactor.utils.timing import current_utc_timestamp
+from pioreactor.utils.timing import current_utc_datetime
 from pioreactor.whoami import get_latest_experiment_name
 from pioreactor.whoami import get_unit_name
 
@@ -21,7 +21,7 @@ def parser(topic, payload) -> dict:
     return {
         "experiment": metadata.experiment,
         "pioreactor_unit": metadata.pioreactor_unit,
-        "timestamp": current_utc_timestamp(),
+        "timestamp": current_utc_datetime(),
         "reading": float(payload),
         "band": int(metadata.rest_of_topic[-1].removeprefix("band_")),
     }
@@ -90,7 +90,7 @@ class SpectrometerReading(BackgroundJobWithDodging):
 
         if max(raw_channels) == 2**16 - 1:
             # gain is too high
-            self.logger.warning("A color sensor is saturated - reduce the value of [led_current_mA]")
+            self.logger.warning("A color sensor is saturated - reduce the value of [led_current_mA] in your config.")
 
         return normalized_channels
 
