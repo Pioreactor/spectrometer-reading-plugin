@@ -4,7 +4,7 @@ from __future__ import annotations
 import adafruit_as7341
 import board
 import click
-from pioreactor.background_jobs.base import BackgroundJobWithDodging
+from pioreactor.background_jobs.base import BackgroundJobWithDodgingContrib
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_source_to_sink
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParserToTable
@@ -45,7 +45,7 @@ register_source_to_sink(
 )
 
 
-class SpectrometerReading(BackgroundJobWithDodging):
+class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
     job_name = "spectrometer_reading"
 
@@ -61,7 +61,7 @@ class SpectrometerReading(BackgroundJobWithDodging):
     }
 
     def __init__(self, unit, experiment):
-        super().__init__(unit=unit, experiment=experiment)
+        super().__init__(unit=unit, experiment=experiment, source="spectrometer_reading_plugin")
 
         try:
             i2c = board.I2C()
