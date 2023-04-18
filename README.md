@@ -18,6 +18,9 @@ This plugin also installs a SQL table, `as7341_spectrum_readings`, that will sto
 
 **After plugin installation, a reboot of the Pioreactor leader is necessary**
 
+### Hardware installation
+
+See [notes here](https://github.com/Pioreactor/spectrometer-reading-plugin/wiki#installation).
 
 ### How it works
 
