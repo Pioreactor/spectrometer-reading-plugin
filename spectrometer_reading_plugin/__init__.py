@@ -61,13 +61,14 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
     }
 
     def __init__(self, unit, experiment):
-        super().__init__(unit=unit, experiment=experiment, source="spectrometer_reading_plugin")
+        super().__init__(unit=unit, experiment=experiment, plugin_name="spectrometer_reading_plugin")
 
         try:
             i2c = board.I2C()
             self.sensor = adafruit_as7341.AS7341(i2c)
         except Exception:
             self.logger.error("Is the AS7341 board attached to the Pioreactor HAT?")
+            self.clean_up()
             raise HardwareNotFoundError("Is the AS7341 board attached to the Pioreactor HAT?")
 
         self.sensor.led_current = config.getfloat("spectrometer_reading", "led_current_mA")
