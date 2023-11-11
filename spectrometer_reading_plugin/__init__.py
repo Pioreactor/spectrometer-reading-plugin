@@ -61,7 +61,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         "band_680": {"datatype": "float", "unit": "AU", "settable": False},
     }
 
-    def __init__(self, unit, experiment):
+    def __init__(self, unit: str, experiment: str) -> None:
         super().__init__(unit=unit, experiment=experiment, plugin_name="spectrometer_reading_plugin")
 
         try:
@@ -75,9 +75,9 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         self.sensor.led_current = config.getfloat("spectrometer_reading.config", "led_current_mA")
         self.sensor.gain = 10  # use max gain - vary the LED current to avoid saturation
         self.is_setup = False
-        self._background_noise = (0.0,) * 8
+        self._background_noise = [0.0] * 8
 
-    def record_all_bands(self):
+    def record_all_bands(self) -> list[float]:
         raw_channels = list(self.sensor.all_channels)
         normalized_channels = self.normalize_by_gain_time(raw_channels)
 
@@ -108,23 +108,23 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
     def action_to_do_before_od_reading(self):
         pass
 
-    def on_disconnected(self):
+    def on_disconnected(self) -> None:
         self.turn_off_led()
 
-    def turn_on_led(self):
+    def turn_on_led(self) -> None:
         self.sensor.led = True
 
-    def turn_off_led(self):
+    def turn_off_led(self) -> None:
         self.sensor.led = False
 
-    def record_background_noise(self):
+    def record_background_noise(self) -> None:
         self.turn_off_led()
         # initially we record all sensors with LED off, to account for dark current, ambient light, etc.
         self._background_noise = self.normalize_by_gain_time(list(self.sensor.all_channels))
 
         self.logger.debug(f"Setup done, {self._background_noise=}")
 
-    def action_to_do_after_od_reading(self):
+    def action_to_do_after_od_reading(self) -> None:
         if self.is_setup is False:
             self.record_background_noise()
             self.is_setup = True
@@ -144,7 +144,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
 
 @click.command(name="spectrometer_reading")
-def click_spectrometer_reading():
+def click_spectrometer_reading() -> None:
     """
     Start spectrometer reading from the AS7341 sensor.
     """
