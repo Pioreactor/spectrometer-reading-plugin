@@ -4,6 +4,7 @@ from __future__ import annotations
 import adafruit_as7341
 import board
 import click
+import pioreactor.actions.led_intensity as led_utils
 from pioreactor.background_jobs.base import BackgroundJobWithDodgingContrib
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_source_to_sink
@@ -128,9 +129,18 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             self.record_background_noise()
             self.is_setup = True
         else:
-            self.turn_on_led()
-            self.record_all_bands()
-            self.turn_off_led()
+            # turn off all LEDs to not interfere with our LED.
+            with led_utils.change_leds_intensities_temporarily(
+                {ch: 0.0 for ch in led_utils.ALL_LED_CHANNELS},
+                unit=self.unit,
+                experiment=self.experiment,
+                source_of_event=self.job_name,
+                pubsub_client=self.pub_client,
+                verbose=False,
+            ):
+                self.turn_on_led()
+                self.record_all_bands()
+                self.turn_off_led()
 
 
 @click.command(name="spectrometer_reading")
