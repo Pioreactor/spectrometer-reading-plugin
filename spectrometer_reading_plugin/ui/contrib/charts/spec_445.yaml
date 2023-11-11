@@ -1,0 +1,12 @@
+---
+data_source: as7341_spectrum_readings_445 # SQL table
+data_source_column: reading
+title: 445nm readings
+mqtt_topic: spectrometer_reading/band_445
+chart_key: spec_445
+source: app
+y_axis_label: AU
+interpolation: stepAfter
+y_axis_domain: [0.00, 0.100]
+lookback: 100000
+fixed_decimals: 5

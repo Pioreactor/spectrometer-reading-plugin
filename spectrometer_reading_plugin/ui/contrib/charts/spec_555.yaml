@@ -1,0 +1,12 @@
+---
+data_source: as7341_spectrum_readings_555 # SQL table
+data_source_column: reading
+title: 555nm readings
+mqtt_topic: spectrometer_reading/band_555
+chart_key: spec_555
+source: app
+y_axis_label: AU
+interpolation: stepAfter
+y_axis_domain: [0.00, 0.100]
+lookback: 100000
+fixed_decimals: 5
