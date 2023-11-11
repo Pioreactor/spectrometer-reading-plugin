@@ -5,6 +5,7 @@ import adafruit_as7341
 import board
 import click
 import pioreactor.actions.led_intensity as led_utils
+from pioreactor import types as pt
 from pioreactor.background_jobs.base import BackgroundJobWithDodgingContrib
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_source_to_sink
@@ -16,7 +17,7 @@ from pioreactor.whoami import get_latest_experiment_name
 from pioreactor.whoami import get_unit_name
 
 
-def parser(topic, payload) -> dict:
+def parser(topic: str, payload: pt.MQTTMessagePayload) -> dict:
     metadata = produce_metadata(topic)
 
     return {
@@ -29,20 +30,48 @@ def parser(topic, payload) -> dict:
 
 
 register_source_to_sink(
-    TopicToParserToTable(
-        [
+    [
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_415",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_445",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_480",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_515",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_555",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_590",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_630",
+            parser,
+            "as7341_spectrum_readings",
+        ),
+        TopicToParserToTable(
             "pioreactor/+/+/spectrometer_reading/band_680",
-        ],
-        parser,
-        "as7341_spectrum_readings",
-    )
+            parser,
+            "as7341_spectrum_readings",
+        ),
+    ]
 )
 
 
