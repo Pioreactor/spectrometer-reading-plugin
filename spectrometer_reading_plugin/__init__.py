@@ -71,7 +71,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             self.clean_up()
             raise HardwareNotFoundError("Is the AS7341 board attached to the Pioreactor HAT?")
 
-        self.sensor.led_current = config.getfloat("spectrometer_reading", "led_current_mA")
+        self.sensor.led_current = config.getfloat("spectrometer_reading.config", "led_current_mA")
         self.sensor.gain = 10  # use max gain - vary the LED current to avoid saturation
         self.is_setup = False
         self._background_noise = (0.0,) * 8
