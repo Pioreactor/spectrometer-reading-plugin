@@ -1,6 +1,6 @@
 ## Spectrometer reading plugin
 
-Records spectrometer readings from the Adafruit AS7341 spectrometer sensor attached to your Pioreactor. 
+Records spectrometer readings from the Adafruit AS7341 spectrometer sensor attached to your Pioreactor.
 
 Available wavelengths:
 
@@ -16,7 +16,15 @@ Available wavelengths:
 
 This plugin also installs a SQL table, `as7341_spectrum_readings`, that will store the readings.
 
-**After plugin installation, a reboot of the Pioreactor leader is necessary**
+
+### Charts
+
+After installation, you can add specific bands as charts. Add `spec_415=1`, or whatever band(s) you want, to the `[ui.overview.charts]` section, ex:
+
+![ui of configuration](https://user-images.githubusercontent.com/884032/282266761-c1f962f7-2ddf-45e3-9bf6-ad78b4c6b75a.png)
+
+
+
 
 ### Hardware installation
 
@@ -25,7 +33,7 @@ See [notes here](https://github.com/Pioreactor/spectrometer-reading-plugin/wiki#
 ### How it works
 
 1. In between optical density recordings, the white-light LED on the AS7341 board turns on.
-2. The light is reflected back towards the board, with some wavelengths being absorbed by the culture. 
+2. The light is reflected back towards the board, with some wavelengths being absorbed by the culture.
 3. All sensors for each wavelength are recorded to MQTT and the SQLite3 database (see below)
 4. The LED is turned off.
 
@@ -40,4 +48,4 @@ And it is also placed in the SQL table `as7341_spectrum_readings`.
 
 ### Hardware requirements
 
- - Requires the [Adafruit board AS7341](https://www.adafruit.com/product/4698) and a StemmaQT 4pin cable. 
+ - Requires the [Adafruit board AS7341](https://www.adafruit.com/product/4698) and a StemmaQT 4pin cable.
