@@ -1,3 +1,4 @@
 recursive-include spectrometer_reading_plugin/ui/ *.yaml
 include spectrometer_reading_plugin/additional_config.ini
 include spectrometer_reading_plugin/additional_sql.sql
+include spectrometer_reading_plugin/post_install.sh
