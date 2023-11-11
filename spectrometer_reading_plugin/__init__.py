@@ -154,19 +154,19 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         self.logger.debug(f"Setup done, {self._background_noise=}")
 
     def action_to_do_after_od_reading(self) -> None:
-        if self.is_setup is False:
-            self.record_background_noise()
-            self.is_setup = True
-        else:
-            # turn off all LEDs to not interfere with our LED.
-            with led_utils.change_leds_intensities_temporarily(
-                {ch: 0.0 for ch in led_utils.ALL_LED_CHANNELS},
-                unit=self.unit,
-                experiment=self.experiment,
-                source_of_event=self.job_name,
-                pubsub_client=self.pub_client,
-                verbose=False,
-            ):
+        with led_utils.change_leds_intensities_temporarily(
+            {ch: 0.0 for ch in led_utils.ALL_LED_CHANNELS},
+            unit=self.unit,
+            experiment=self.experiment,
+            source_of_event=self.job_name,
+            pubsub_client=self.pub_client,
+            verbose=False,
+        ):
+            if self.is_setup is False:
+                self.record_background_noise()
+                self.is_setup = True
+            else:
+                # turn off all LEDs to not interfere with our LED.
                 self.turn_on_led()
                 self.record_all_bands()
                 self.turn_off_led()
