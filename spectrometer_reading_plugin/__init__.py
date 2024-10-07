@@ -102,8 +102,10 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             raise HardwareNotFoundError("Is the AS7341 board attached to the Pioreactor HAT?")
 
         self.sensor.led_current = config.getfloat("spectrometer_reading.config", "led_current_mA")
+        # there is currently a lower-bound to the current. Ex: if a user provided 0, the current is actually 4. https://github.com/adafruit/Adafruit_CircuitPython_AS7341/blob/main/adafruit_as7341.py#L721-L734
+
         self.sensor.gain = 10  # use max gain - vary the LED current to avoid saturation
-        self.is_setup = False
+        self.is_setup_done = False
         self._background_noise = [0.0] * 8
 
     def record_all_bands(self) -> list[float]:
@@ -141,7 +143,11 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         self.turn_off_led()
 
     def turn_on_led(self) -> None:
-        self.sensor.led = True
+        if config.getfloat("spectrometer_reading.config", "led_current_mA") > 0:
+            self.sensor.led = True
+        else:
+            pass
+            # see note above
 
     def turn_off_led(self) -> None:
         self.sensor.led = False
@@ -153,20 +159,36 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
         self.logger.debug(f"Setup done, {self._background_noise=}")
 
+    @property
+    def led_state_during_spec_reading(self) -> dict:
+        if config.getboolean("spectrometer_reading.config", "turn_off_leds_during_reading", fallback="True"):
+            return {channel: 0.0 for channel in led_utils.ALL_LED_CHANNELS}
+        else:
+            return {}
+
     def action_to_do_after_od_reading(self) -> None:
-        with led_utils.change_leds_intensities_temporarily(
-            {ch: 0.0 for ch in led_utils.ALL_LED_CHANNELS},
-            unit=self.unit,
-            experiment=self.experiment,
-            source_of_event=self.job_name,
-            pubsub_client=self.pub_client,
-            verbose=False,
-        ):
-            if self.is_setup is False:
+        if not self.is_setup_done:
+            with led_utils.change_leds_intensities_temporarily(
+                {channel: 0.0 for channel in led_utils.ALL_LED_CHANNELS},
+                unit=self.unit,
+                experiment=self.experiment,
+                source_of_event=self.job_name,
+                pubsub_client=self.pub_client,
+                verbose=False,
+            ):
+                self.turn_off_led()
                 self.record_background_noise()
-                self.is_setup = True
-            else:
-                # turn off all LEDs to not interfere with our LED.
+
+            self.is_setup_done = True
+        else:
+            with led_utils.change_leds_intensities_temporarily(
+                self.led_state_during_spec_reading,
+                unit=self.unit,
+                experiment=self.experiment,
+                source_of_event=self.job_name,
+                pubsub_client=self.pub_client,
+                verbose=False,
+            ):
                 self.turn_on_led()
                 self.record_all_bands()
                 self.turn_off_led()
