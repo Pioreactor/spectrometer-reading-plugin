@@ -1,0 +1,10 @@
+dataset_name: as7341_spectrum_readings_480
+default_order_by: timestamp
+description: This dataset includes spectrometer readings at 480nm.
+display_name: Optical density
+has_experiment: true
+has_unit: true
+source: spectrometer-reading-plugin
+table: as7341_spectrum_readings_480
+timestamp_columns:
+- timestamp

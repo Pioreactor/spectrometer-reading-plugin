@@ -136,9 +136,6 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         # section 2.1
         return [x / 2 ** (self.sensor.gain - 1) / self.sensor.atime for x in band_recordings]
 
-    def action_to_do_before_od_reading(self):
-        pass
-
     def on_disconnected(self) -> None:
         self.turn_off_led()
 
@@ -166,6 +163,9 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         else:
             return {}
 
+    def action_to_do_before_od_reading(self):
+        self.turn_off_led()
+
     def action_to_do_after_od_reading(self) -> None:
         if not self.is_setup_done:
             with led_utils.change_leds_intensities_temporarily(
@@ -191,7 +191,8 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             ):
                 self.turn_on_led()
                 self.record_all_bands()
-                self.turn_off_led()
+                if not config.getboolean("spectrometer_reading.config", "always_keep_led_on", fallback="False"):
+                    self.turn_off_led()
 
 
 @click.command(name="spectrometer_reading")
