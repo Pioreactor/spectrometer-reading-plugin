@@ -13,7 +13,7 @@ from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParser
 from pioreactor.config import config
 from pioreactor.exc import HardwareNotFoundError
 from pioreactor.utils.timing import current_utc_datetime
-from pioreactor.whoami import get_latest_experiment_name
+from pioreactor.whoami import get_assigned_experiment_name
 from pioreactor.whoami import get_unit_name
 
 
@@ -200,8 +200,10 @@ def click_spectrometer_reading() -> None:
     """
     Start spectrometer reading from the AS7341 sensor.
     """
+    unit = get_unit_name()
+    exp = get_assigned_experiment_name(unit)
     job = SpectrometerReading(
-        unit=get_unit_name(),
-        experiment=get_latest_experiment_name(),
+        unit=unit,
+        experiment=exp,
     )
     job.block_until_disconnected()
