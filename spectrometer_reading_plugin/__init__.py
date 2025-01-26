@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import adafruit_as7341
 import board
-import click
 import pioreactor.actions.led_intensity as led_utils
 from pioreactor import types as pt
 from pioreactor.background_jobs.base import BackgroundJobWithDodgingContrib
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import produce_metadata
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import register_source_to_sink
 from pioreactor.background_jobs.leader.mqtt_to_db_streaming import TopicToParserToTable
+from pioreactor.cli.run import run
 from pioreactor.config import config
 from pioreactor.exc import HardwareNotFoundError
 from pioreactor.utils.timing import current_utc_datetime
@@ -147,7 +147,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             # see note above
 
     def turn_off_led(self) -> None:
-        self.sensor.led = False
+        self.sensor.led = False  # turn off the LED
 
     def record_background_noise(self) -> None:
         self.turn_off_led()
@@ -195,8 +195,8 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
                     self.turn_off_led()
 
 
-@click.command(name="spectrometer_reading")
-def click_spectrometer_reading() -> None:
+@run.command(name="spectrometer_reading")
+def start_spectrometer_reading() -> None:
     """
     Start spectrometer reading from the AS7341 sensor.
     """
