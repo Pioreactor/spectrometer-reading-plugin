@@ -90,8 +90,10 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         "band_680": {"datatype": "float", "unit": "AU", "settable": False},
     }
 
-    def __init__(self, unit: str, experiment: str) -> None:
-        super().__init__(unit=unit, experiment=experiment, plugin_name="spectrometer_reading_plugin")
+    def __init__(self, unit: str, experiment: str, enable_dodging_od=False) -> None:
+        super().__init__(
+            unit=unit, experiment=experiment, enable_dodging_od=enable_dodging_od, plugin_name="spectrometer_reading_plugin"
+        )
 
         try:
             i2c = board.I2C()
@@ -202,8 +204,6 @@ def start_spectrometer_reading() -> None:
     """
     unit = get_unit_name()
     exp = get_assigned_experiment_name(unit)
-    job = SpectrometerReading(
-        unit=unit,
-        experiment=exp,
-    )
+    enable_dodging_od = config.getboolean("spectrometer_reading.config", "enable_dodging_od", fallback="false")
+    job = SpectrometerReading(unit=unit, experiment=exp, enable_dodging_od=enable_dodging_od)
     job.block_until_disconnected()
