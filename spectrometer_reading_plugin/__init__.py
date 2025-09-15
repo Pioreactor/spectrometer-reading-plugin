@@ -143,7 +143,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
     def turn_on_led(self) -> None:
         if (
-            config.getbool("spectrometer_reading.config", "use_onboard_led")
+            config.getboolean("spectrometer_reading.config", "use_onboard_led")
             and config.getfloat("spectrometer_reading.config", "led_current_mA") > 0
         ):
             self.sensor.led = True
