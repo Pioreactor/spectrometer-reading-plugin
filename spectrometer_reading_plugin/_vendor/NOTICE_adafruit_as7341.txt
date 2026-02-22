@@ -1,0 +1,6 @@
+This plugin vendors `adafruit_as7341.py` from:
+https://github.com/adafruit/Adafruit_CircuitPython_AS7341
+
+Downloaded on: 2026-02-22
+License: MIT (see LICENSE_adafruit_as7341.txt)
+SPDX in source: SPDX-FileCopyrightText and SPDX-License-Identifier: MIT
