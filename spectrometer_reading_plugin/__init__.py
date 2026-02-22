@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import adafruit_as7341
+from contextlib import suppress
+
 import board
 import pioreactor.actions.led_intensity as led_utils
 from pioreactor import types as pt
@@ -13,8 +14,11 @@ from pioreactor.cli.run import run
 from pioreactor.config import config
 from pioreactor.exc import HardwareNotFoundError
 from pioreactor.utils.timing import current_utc_datetime
+from pioreactor.utils.timing import RepeatedTimer
 from pioreactor.whoami import get_assigned_experiment_name
 from pioreactor.whoami import get_unit_name
+
+from spectrometer_reading_plugin._vendor import adafruit_as7341
 
 
 def parser(topic: str, payload: pt.MQTTMessagePayload) -> dict:
@@ -90,7 +94,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         "band_680": {"datatype": "float", "unit": "AU", "settable": False},
     }
 
-    def __init__(self, unit: str, experiment: str, enable_dodging_od=False) -> None:
+    def __init__(self, unit: str, experiment: str, enable_dodging_od: bool = False) -> None:
         super().__init__(
             unit=unit, experiment=experiment, enable_dodging_od=enable_dodging_od, plugin_name="spectrometer_reading_plugin"
         )
@@ -109,6 +113,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         self.sensor.gain = 10  # use max gain - vary the LED current to avoid saturation
         self.is_setup_done = False
         self._background_noise = [0.0] * 8
+        self.continuous_sampling_timer: RepeatedTimer | None = None
 
     def record_all_bands(self) -> list[float]:
         raw_channels = list(self.sensor.all_channels)
@@ -129,7 +134,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
         return normalized_channels
 
-    def normalize_by_offset(self, band_recordings: list[float], index) -> float:
+    def normalize_by_offset(self, band_recordings: list[float], index: int) -> float:
         return band_recordings[index] - self._background_noise[index]
 
     def normalize_by_gain_time(self, band_recordings: list[int]) -> list[float]:
@@ -139,6 +144,9 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
         return [x / 2 ** (self.sensor.gain - 1) / self.sensor.atime for x in band_recordings]
 
     def on_disconnected(self) -> None:
+        super().on_disconnected()
+        with suppress(AttributeError):
+            self.continuous_sampling_timer.cancel()
         self.turn_off_led()
 
     def turn_on_led(self) -> None:
@@ -163,7 +171,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
 
     @property
     def led_state_during_spec_reading(self) -> dict:
-        if config.getboolean("spectrometer_reading.config", "turn_off_leds_during_reading", fallback="True"):
+        if config.getboolean("spectrometer_reading.config", "turn_off_leds_during_reading", fallback=True):
             return {channel: 0.0 for channel in led_utils.ALL_LED_CHANNELS}
         else:
             return {}
@@ -171,7 +179,7 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
     def action_to_do_before_od_reading(self):
         self.turn_off_led()
 
-    def action_to_do_after_od_reading(self) -> None:
+    def _record_once(self) -> None:
         if not self.is_setup_done:
             with led_utils.change_leds_intensities_temporarily(
                 {channel: 0.0 for channel in led_utils.ALL_LED_CHANNELS},
@@ -196,8 +204,38 @@ class SpectrometerReading(BackgroundJobWithDodgingContrib):
             ):
                 self.turn_on_led()
                 self.record_all_bands()
-                if not config.getboolean("spectrometer_reading.config", "always_keep_led_on", fallback="False"):
+                if not config.getboolean("spectrometer_reading.config", "always_keep_led_on", fallback=False):
                     self.turn_off_led()
+
+    def action_to_do_after_od_reading(self) -> None:
+        self._record_once()
+
+    def _record_continuously(self) -> None:
+        if self.state != self.READY or self.currently_dodging_od:
+            return
+        self._record_once()
+
+    def initialize_dodging_operation(self) -> None:
+        with suppress(AttributeError):
+            self.continuous_sampling_timer.cancel()
+
+    def initialize_continuous_operation(self) -> None:
+        with suppress(AttributeError):
+            self.continuous_sampling_timer.cancel()
+
+        samples_per_second = config.getfloat("od_reading.config", "samples_per_second", fallback=0.2)
+        if samples_per_second <= 0:
+            self.logger.error("od_reading.config.samples_per_second must be greater than 0 for continuous sampling.")
+            self.clean_up()
+            return
+
+        self.continuous_sampling_timer = RepeatedTimer(
+            1.0 / samples_per_second,
+            self._record_continuously,
+            job_name=self.job_name,
+            run_immediately=True,
+            logger=self.logger,
+        ).start()
 
 
 @run.command(name="spectrometer_reading")
@@ -207,6 +245,6 @@ def start_spectrometer_reading() -> None:
     """
     unit = get_unit_name()
     exp = get_assigned_experiment_name(unit)
-    enable_dodging_od = config.getboolean("spectrometer_reading.config", "enable_dodging_od", fallback="false")
+    enable_dodging_od = config.getboolean("spectrometer_reading.config", "enable_dodging_od", fallback=False)
     job = SpectrometerReading(unit=unit, experiment=exp, enable_dodging_od=enable_dodging_od)
     job.block_until_disconnected()

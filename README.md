@@ -37,6 +37,8 @@ See [notes here](https://github.com/Pioreactor/spectrometer-reading-plugin/wiki#
 3. All sensors for each wavelength are recorded to MQTT and the SQLite3 database (see below)
 4. The onboard LED is turned off.
 
+If `od_reading` is not running, this job samples continuously at the same rate as `[od_reading.config].samples_per_second`. When `od_reading` starts, the job switches to dodging mode automatically.
+
 Each wavelength is sent to MQTT under the topics:
 
 ```
@@ -58,3 +60,11 @@ turn_off_leds_during_reading=0
 ### Hardware requirements
 
  - Requires the [Adafruit board AS7341](https://www.adafruit.com/product/4698) and a StemmaQT 4pin cable.
+
+### Vendored dependency
+
+This plugin vendors Adafruit's `adafruit_as7341.py` module in `spectrometer_reading_plugin/_vendor/`.
+License and provenance are included in:
+
+- `spectrometer_reading_plugin/_vendor/LICENSE_adafruit_as7341.txt`
+- `spectrometer_reading_plugin/_vendor/NOTICE_adafruit_as7341.txt`
