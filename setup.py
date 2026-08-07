@@ -17,6 +17,10 @@ setup(
     url="https://github.com/Pioreactor/spectrometer-reading-plugin",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        "Adafruit-Blinka",
+        "adafruit-circuitpython-busdevice",
+        "adafruit-circuitpython-register",
+    ],
     entry_points={"pioreactor.plugins": "spectrometer_reading_plugin = spectrometer_reading_plugin"},
 )

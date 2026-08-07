@@ -19,6 +19,8 @@ leader_address=127.0.0.1
 
 [mqtt]
 broker_address=127.0.0.1
+broker_port=1883
+use_tls=0
 
 [logging]
 log_file={log_file_path}
